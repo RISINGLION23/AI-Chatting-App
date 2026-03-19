@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YellowStone</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    :root{
+      --bg:#0b0b0c;--bg1:#131315;--bg2:#1a1a1d;--bg3:#232327;--bg4:#2d2d33;
+      --bdr:rgba(255,255,255,0.06);--bdr2:rgba(255,255,255,0.11);
+      --txt:#ede8df;--txt2:#9b9590;--txt3:#5e5a55;
+      --amber:#f0a500;--amber-d:rgba(240,165,0,0.10);--amber-g:rgba(240,165,0,0.22);
+      --teal:#00c4a7;--teal-d:rgba(0,196,167,0.10);--teal-g:rgba(0,196,167,0.22);
+      --red:#e86060;--red-d:rgba(232,96,96,0.10);--red-g:rgba(232,96,96,0.22);
+      --font:'Outfit',sans-serif;--serif:'Cormorant Garamond',Georgia,serif;--mono:'IBM Plex Mono',monospace;
+      --r:10px;--rsm:6px;--rlg:16px;--sw:272px;--tr:0.18s ease;
+    }
+    html,body,#root{height:100%;overflow:hidden;}
+    body{font-family:var(--font);background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;}
+    ::-webkit-scrollbar{width:3px;height:3px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+
+    .app{display:flex;height:100vh;overflow:hidden;}
+
+    /* ─── SIDEBAR ─────────────────────────────────────────────── */
+    .sidebar{width:var(--sw);flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden;transition:width var(--tr);}
+    .sidebar.closed{width:0;}
+    .sb-head{padding:18px 14px 14px;border-bottom:1px solid var(--bdr);flex-shrink:0;}
+    .logo{display:flex;align-items:center;gap:10px;margin-bottom:13px;text-decoration:none;}
+    .logo-icon{width:34px;height:34px;background:var(--amber-d);border:1px solid var(--amber-g);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+    .logo-text{font-family:var(--serif);font-size:21px;font-weight:600;color:var(--txt);letter-spacing:0.01em;}
+    .logo-text span{color:var(--amber);}
+    .new-btn{width:100%;background:var(--amber);color:#000;border:none;border-radius:var(--rsm);padding:8px 14px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all var(--tr);}
+    .new-btn:hover{background:#ffba1a;transform:translateY(-1px);box-shadow:0 4px 16px var(--amber-g);}
+    .sb-search{padding:9px 14px;border-bottom:1px solid var(--bdr);flex-shrink:0;position:relative;}
+    .sb-search-icon{position:absolute;left:23px;top:50%;transform:translateY(-50%);color:var(--txt3);font-size:13px;pointer-events:none;}
+    .search-inp{width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rsm);padding:7px 10px 7px 30px;color:var(--txt);font-family:var(--font);font-size:12.5px;outline:none;}
+    .search-inp::placeholder{color:var(--txt3);}
+    .search-inp:focus{border-color:var(--bdr2);}
+    .conv-list{flex:1;overflow-y:auto;padding:6px;}
+    .conv-grp-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);padding:8px 8px 3px;}
+    .conv-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--rsm);cursor:pointer;transition:background var(--tr);position:relative;border:1px solid transparent;}
+    .conv-item:hover{background:var(--bg2);}
+    .conv-item:hover .c-acts{display:flex;}
+    .conv-item.active{background:var(--amber-d);border-color:var(--amber-g);}
+    .conv-ico{font-size:13px;color:var(--txt3);flex-shrink:0;}
+    .conv-item.active .conv-ico{color:var(--amber);}
+    .conv-name{flex:1;font-size:12.5px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .conv-item.active .conv-name{color:var(--txt);}
+    .c-acts{display:none;gap:3px;}
+    .c-act-btn{background:none;border:none;color:var(--txt3);cursor:pointer;padding:2px 4px;border-radius:3px;font-size:12px;line-height:1;transition:color var(--tr);}
+    .c-act-btn:hover{color:var(--txt);}
+    .c-act-btn.del:hover{color:var(--red);}
+    .rename-inp{background:var(--bg2);border:1px solid var(--amber-g);border-radius:4px;padding:2px 6px;color:var(--txt);font-family:var(--font);font-size:12.5px;outline:none;width:calc(100% - 52px);}
+    .sb-foot{padding:10px 14px;border-top:1px solid var(--bdr);flex-shrink:0;}
+    .sb-foot-btn{width:100%;background:none;border:none;color:var(--txt2);cursor:pointer;padding:7px 9px;border-radius:var(--rsm);font-family:var(--font);font-size:12.5px;display:flex;align-items:center;gap:8px;transition:all var(--tr);}
+    .sb-foot-btn:hover{background:var(--bg2);color:var(--txt);}
+    .empty-list{padding:24px 12px;text-align:center;color:var(--txt3);font-size:12px;line-height:1.7;}
+
+    /* ─── MAIN ────────────────────────────────────────────────── */
+    .main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);min-width:0;}
+    .chat-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--bdr);background:var(--bg1);flex-shrink:0;min-height:54px;}
+    .tog-btn{background:none;border:none;color:var(--txt2);cursor:pointer;padding:6px;border-radius:var(--rsm);transition:all var(--tr);display:flex;align-items:center;font-size:16px;flex-shrink:0;}
+    .tog-btn:hover{background:var(--bg2);color:var(--txt);}
+    .hdr-title{flex:1;font-size:14px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+    .model-badge{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--bdr);border-radius:20px;padding:4px 11px 4px 8px;font-size:11.5px;color:var(--txt2);font-family:var(--mono);cursor:pointer;transition:all var(--tr);flex-shrink:0;white-space:nowrap;}
+    .model-badge:hover{border-color:var(--bdr2);color:var(--txt);}
+    .mdot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;box-shadow:0 0 6px var(--teal);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+    .hdr-acts{display:flex;gap:3px;}
+    .ico-btn{background:none;border:none;color:var(--txt2);cursor:pointer;padding:6px;border-radius:var(--rsm);transition:all var(--tr);display:flex;align-items:center;justify-content:center;font-size:15px;}
+    .ico-btn:hover{background:var(--bg2);color:var(--txt);}
+    .ico-btn.on{color:var(--amber);}
+
+    /* ─── MESSAGES ───────────────────────────────────────────── */
+    .msgs-wrap{flex:1;overflow-y:auto;padding:16px 0 8px;}
+    .msgs-inner{max-width:780px;margin:0 auto;padding:0 18px;display:flex;flex-direction:column;gap:4px;}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;text-align:center;padding:40px 20px;}
+    .empty-ico{width:62px;height:62px;background:var(--amber-d);border:1px solid var(--amber-g);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;animation:float 3s ease-in-out infinite;}
+    @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+    .empty-title{font-family:var(--serif);font-size:24px;font-weight:600;color:var(--txt);}
+    .empty-sub{font-size:13px;color:var(--txt2);max-width:320px;line-height:1.7;}
+    .chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:6px;}
+    .chip{background:var(--bg2);border:1px solid var(--bdr);border-radius:18px;padding:6px 13px;font-size:12.5px;color:var(--txt2);cursor:pointer;transition:all var(--tr);}
+    .chip:hover{border-color:var(--amber-g);color:var(--amber);background:var(--amber-d);}
+    .message{display:flex;gap:12px;padding:3px 0;animation:msgIn .22s ease;}
+    @keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+    .message.user{flex-direction:row-reverse;}
+    .msg-avatar{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:3px;}
+    .message.user .msg-avatar{background:var(--amber-d);border:1px solid var(--amber-g);color:var(--amber);}
+    .message.assistant .msg-avatar{background:var(--teal-d);border:1px solid var(--teal-g);color:var(--teal);}
+    .msg-body{flex:1;min-width:0;}
+    .message.user .msg-body{display:flex;flex-direction:column;align-items:flex-end;}
+    .msg-bubble{padding:9px 13px;border-radius:var(--rlg);max-width:88%;font-size:13.5px;line-height:1.65;position:relative;}
+    .message.user .msg-bubble{background:var(--bg3);border:1px solid var(--bdr);border-top-right-radius:4px;color:var(--txt);white-space:pre-wrap;}
+    .message.assistant .msg-bubble{background:transparent;max-width:100%;padding:4px 0;}
+    .msg-meta{display:flex;align-items:center;gap:6px;margin-top:3px;justify-content:flex-start;}
+    .message.user .msg-meta{justify-content:flex-end;}
+    .msg-time{font-size:10.5px;color:var(--txt3);font-family:var(--mono);}
+    .msg-act{display:none;}
+    .message:hover .msg-act{display:inline-block;}
+    .msg-act-btn{background:var(--bg2);border:1px solid var(--bdr);color:var(--txt3);cursor:pointer;padding:2px 8px;border-radius:4px;font-size:11px;font-family:var(--font);transition:all var(--tr);}
+    .msg-act-btn:hover{color:var(--txt);border-color:var(--bdr2);}
+
+    /* ─── MARKDOWN ───────────────────────────────────────────── */
+    .md h1,.md h2,.md h3{font-family:var(--serif);font-weight:600;margin:14px 0 6px;color:var(--txt);}
+    .md h1{font-size:21px;}.md h2{font-size:17px;}.md h3{font-size:15px;}
+    .md p{margin:5px 0;}.md p:first-child{margin-top:0;}.md p:last-child{margin-bottom:0;}
+    .md ul,.md ol{padding-left:20px;margin:7px 0;}.md li{margin:3px 0;}
+    .md code{font-family:var(--mono);font-size:12.5px;background:var(--bg3);padding:1px 5px;border-radius:4px;color:var(--teal);}
+    .md pre{margin:10px 0;overflow:hidden;border-radius:var(--r);border:1px solid var(--bdr);}
+    .md pre code{display:block;padding:13px 15px;overflow-x:auto;background:var(--bg2)!important;font-size:12.5px;line-height:1.6;color:inherit;}
+    .code-hdr{display:flex;align-items:center;justify-content:space-between;padding:5px 12px;background:var(--bg3);border-bottom:1px solid var(--bdr);font-size:10.5px;font-family:var(--mono);color:var(--txt3);}
+    .copy-btn{background:none;border:1px solid var(--bdr);color:var(--txt3);cursor:pointer;padding:2px 8px;border-radius:4px;font-size:10.5px;font-family:var(--font);transition:all var(--tr);}
+    .copy-btn:hover{color:var(--txt);border-color:var(--bdr2);}
+    .md blockquote{border-left:3px solid var(--amber);padding:4px 12px;margin:8px 0;color:var(--txt2);background:var(--amber-d);border-radius:0 var(--rsm) var(--rsm) 0;}
+    .md a{color:var(--teal);text-decoration:none;}.md a:hover{text-decoration:underline;}
+    .md table{border-collapse:collapse;width:100%;margin:10px 0;font-size:12.5px;}
+    .md th,.md td{border:1px solid var(--bdr);padding:6px 10px;text-align:left;}
+    .md th{background:var(--bg2);font-weight:600;color:var(--txt);}
+    .md td{color:var(--txt2);}
+    .md hr{border:none;border-top:1px solid var(--bdr);margin:14px 0;}
+    .stream-cursor{display:inline-block;width:2px;height:14px;background:var(--amber);margin-left:2px;vertical-align:text-bottom;animation:blink .75s step-end infinite;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+    .typing{display:flex;align-items:center;gap:4px;padding:8px 0;}
+    .tdot{width:7px;height:7px;background:var(--txt3);border-radius:50%;animation:tdot 1.4s ease infinite;}
+    .tdot:nth-child(2){animation-delay:.2s;}.tdot:nth-child(3){animation-delay:.4s;}
+    @keyframes tdot{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-5px);opacity:1;}}
+
+    /* ─── INPUT ──────────────────────────────────────────────── */
+    .input-area{padding:10px 14px 14px;border-top:1px solid var(--bdr);background:var(--bg1);flex-shrink:0;}
+    .input-inner{max-width:780px;margin:0 auto;}
+    .input-box{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rlg);overflow:hidden;transition:border-color var(--tr),box-shadow var(--tr);}
+    .input-box:focus-within{border-color:var(--bdr2);box-shadow:0 0 0 3px var(--amber-d);}
+    .inp-ta{width:100%;background:transparent;border:none;padding:11px 13px 3px;color:var(--txt);font-family:var(--font);font-size:13.5px;line-height:1.6;resize:none;outline:none;min-height:42px;max-height:200px;overflow-y:auto;}
+    .inp-ta::placeholder{color:var(--txt3);}
+    .inp-foot{display:flex;align-items:center;justify-content:space-between;padding:5px 10px 8px;}
+    .inp-hint{font-size:11px;color:var(--txt3);font-family:var(--mono);}
+    .inp-right{display:flex;gap:6px;align-items:center;}
+    .voice-btn{background:none;border:1px solid var(--bdr);color:var(--txt2);cursor:pointer;padding:5px 10px;border-radius:var(--rsm);font-size:12.5px;display:flex;align-items:center;gap:5px;transition:all var(--tr);font-family:var(--font);}
+    .voice-btn:hover{border-color:var(--bdr2);color:var(--txt);}
+    .voice-btn.active{background:var(--red-d);border-color:var(--red-g);color:var(--red);animation:vPulse 1.5s ease infinite;}
+    @keyframes vPulse{0%,100%{box-shadow:0 0 0 0 var(--red-d);}50%{box-shadow:0 0 0 5px transparent;}}
+    .stop-btn{background:var(--red-d);border:1px solid var(--red-g);color:var(--red);cursor:pointer;padding:6px 14px;border-radius:var(--rsm);font-family:var(--font);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:5px;transition:all var(--tr);}
+    .stop-btn:hover{background:var(--red-g);}
+    .send-btn{background:var(--amber);border:none;color:#000;cursor:pointer;padding:7px 16px;border-radius:var(--rsm);font-family:var(--font);font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px;transition:all var(--tr);}
+    .send-btn:hover{background:#ffba1a;box-shadow:0 2px 10px var(--amber-g);}
+    .send-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
+    .err-msg{background:var(--red-d);border:1px solid var(--red-g);border-radius:var(--r);padding:9px 13px;color:var(--red);font-size:13px;margin:6px 0;display:flex;align-items:flex-start;gap:8px;line-height:1.5;}
+
+    /* ─── PANELS ─────────────────────────────────────────────── */
+    .panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:flex;justify-content:flex-end;animation:fadeIn .15s ease;}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    .panel{width:420px;max-width:100vw;background:var(--bg1);border-left:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden;animation:panelIn .2s ease;}
+    @keyframes panelIn{from{transform:translateX(100%);}to{transform:translateX(0);}}
+    .panel-hdr{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--bdr);flex-shrink:0;}
+    .panel-ttl{font-size:14.5px;font-weight:600;color:var(--txt);display:flex;align-items:center;gap:8px;}
+    .panel-close{background:none;border:none;color:var(--txt2);cursor:pointer;padding:4px;border-radius:var(--rsm);transition:all var(--tr);display:flex;align-items:center;font-size:15px;}
+    .panel-close:hover{background:var(--bg2);color:var(--txt);}
+    .panel-body{flex:1;overflow-y:auto;padding:18px;}
+    .panel-footer{padding:0 18px 18px;flex-shrink:0;}
+    .save-btn{width:100%;background:var(--amber);border:none;color:#000;padding:10px;border-radius:var(--rsm);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--tr);}
+    .save-btn:hover{background:#ffba1a;}
+    .fsec{margin-bottom:22px;}
+    .fsec-ttl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:10px;}
+    .fgrp{margin-bottom:13px;}
+    .flbl{display:block;font-size:12.5px;font-weight:500;color:var(--txt2);margin-bottom:5px;}
+    .f-inp{width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rsm);padding:8px 10px;color:var(--txt);font-family:var(--mono);font-size:12.5px;outline:none;transition:border-color var(--tr);}
+    .f-inp:focus{border-color:var(--bdr2);}.f-inp::placeholder{color:var(--txt3);}
+    .f-sel{width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rsm);padding:8px 30px 8px 10px;color:var(--txt);font-family:var(--font);font-size:13px;outline:none;cursor:pointer;transition:border-color var(--tr);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%235e5a55' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+    .f-sel:focus{border-color:var(--bdr2);}.f-sel option{background:var(--bg2);}
+    .rng-wrap{display:flex;align-items:center;gap:10px;}
+    .f-rng{flex:1;appearance:none;height:4px;background:var(--bg4);border-radius:2px;outline:none;cursor:pointer;}
+    .f-rng::-webkit-slider-thumb{appearance:none;width:14px;height:14px;background:var(--amber);border-radius:50%;cursor:pointer;transition:transform var(--tr);}
+    .f-rng::-webkit-slider-thumb:hover{transform:scale(1.25);}
+    .rng-val{font-size:11.5px;font-family:var(--mono);color:var(--amber);min-width:34px;text-align:right;}
+    .prov-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:18px;}
+    .prov-tab{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rsm);padding:8px 4px;cursor:pointer;text-align:center;transition:all var(--tr);font-size:11px;color:var(--txt2);}
+    .prov-tab:hover{border-color:var(--bdr2);color:var(--txt);}
+    .prov-tab.on{background:var(--amber-d);border-color:var(--amber-g);color:var(--amber);}
+    .prov-tab-ico{font-size:18px;display:block;margin-bottom:3px;}
+    .tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+    .tpl-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 11px;cursor:pointer;transition:all var(--tr);text-align:left;}
+    .tpl-card:hover{border-color:var(--bdr2);}
+    .tpl-card.on{border-color:var(--amber-g);background:var(--amber-d);}
+    .tpl-ico{font-size:19px;margin-bottom:4px;}
+    .tpl-name{font-size:12px;font-weight:600;color:var(--txt);}
+    .tpl-desc{font-size:11px;color:var(--txt3);margin-top:2px;}
+    .sys-ta{width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 12px;color:var(--txt);font-family:var(--mono);font-size:12px;line-height:1.65;resize:vertical;outline:none;min-height:130px;transition:border-color var(--tr);}
+    .sys-ta:focus{border-color:var(--bdr2);}
+    .exp-fmts{display:flex;gap:7px;margin-bottom:14px;}
+    .exp-fmt-btn{flex:1;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rsm);padding:8px;cursor:pointer;text-align:center;font-size:12px;color:var(--txt2);font-family:var(--font);transition:all var(--tr);}
+    .exp-fmt-btn:hover{border-color:var(--bdr2);color:var(--txt);}
+    .exp-fmt-btn.on{background:var(--amber-d);border-color:var(--amber-g);color:var(--amber);}
+    .exp-dl-btn{width:100%;background:var(--amber);border:none;color:#000;padding:10px;border-radius:var(--rsm);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--tr);display:flex;align-items:center;justify-content:center;gap:8px;}
+    .exp-dl-btn:hover{background:#ffba1a;}
+    .info-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:13px 14px;margin-bottom:10px;}
+    .stat-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:12.5px;}
+    .stat-row:last-child{border-bottom:none;}
+    .stat-row .k{color:var(--txt2);}.stat-row .v{font-family:var(--mono);color:var(--amber);}
+    .kbd{font-family:var(--mono);background:var(--bg3);padding:1px 7px;border-radius:4px;font-size:11px;color:var(--txt3);border:1px solid var(--bdr);}
+    .danger-btn{width:100%;background:var(--red-d);border:1px solid var(--red-g);color:var(--red);padding:9px;border-radius:var(--rsm);cursor:pointer;font-family:var(--font);font-size:13px;margin-top:6px;transition:all var(--tr);}
+    .danger-btn:hover{background:var(--red-g);}
+
+    /* ─── TOAST ──────────────────────────────────────────────── */
+    .toast{position:fixed;bottom:18px;right:18px;background:var(--bg3);border:1px solid var(--bdr2);border-radius:var(--r);padding:9px 15px;color:var(--txt);font-size:12.5px;z-index:300;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:toastIn .2s ease;}
+    @keyframes toastIn{from{transform:translateY(14px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+    @media(max-width:640px){
+      .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%);transition:transform var(--tr);}
+      .sidebar.mob-open{transform:translateX(0);}
+      .panel{width:100vw;}
+      .hdr-title{display:none;}
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState, useEffect, useRef, useCallback} = React;
+
+// ─── CONSTANTS ──────────────────────────────────────────────
+const PROVIDERS = {
+  anthropic:{name:'Claude',icon:'🔮',
+    models:['claude-opus-4-5','claude-sonnet-4-5','claude-haiku-4-5-20251001'],
+    defaultModel:'claude-sonnet-4-5'},
+  openai:{name:'OpenAI',icon:'⚡',
+    models:['gpt-4o','gpt-4o-mini','gpt-4-turbo','gpt-3.5-turbo'],
+    defaultModel:'gpt-4o'},
+  gemini:{name:'Gemini',icon:'✦',
+    models:['gemini-2.0-flash','gemini-1.5-pro','gemini-1.5-flash'],
+    defaultModel:'gemini-2.0-flash'},
+  ollama:{name:'Ollama',icon:'🦙',
+    models:['llama3.2','mistral','codellama','phi3','gemma2'],
+    defaultModel:'llama3.2'},
+};
+
+const TEMPLATES = [
+  {id:'assistant',icon:'🤖',name:'Assistant',desc:'Helpful & balanced',
+   prompt:'You are a helpful, harmless, and honest AI assistant. Provide clear, accurate, and thoughtful responses.'},
+  {id:'coder',icon:'💻',name:'Coder',desc:'Expert programmer',
+   prompt:'You are an expert software engineer. Write clean, efficient, well-commented code. Explain your reasoning and suggest best practices. Use markdown code blocks.'},
+  {id:'writer',icon:'✍️',name:'Writer',desc:'Creative writing',
+   prompt:'You are a skilled creative writer. Help craft compelling, engaging content with vivid descriptions and authentic voice. Focus on storytelling and prose quality.'},
+  {id:'analyst',icon:'📊',name:'Analyst',desc:'Data & research',
+   prompt:'You are a rigorous analytical thinker. Provide structured, evidence-based insights with clear logic and quantitative reasoning where applicable.'},
+  {id:'teacher',icon:'🎓',name:'Teacher',desc:'Patient educator',
+   prompt:'You are a patient, engaging teacher who excels at explaining complex concepts simply. Use analogies, examples, and step-by-step breakdowns.'},
+  {id:'custom',icon:'⚙️',name:'Custom',desc:'Write your own',prompt:''},
+];
+
+const DEFAULT_CFG = {
+  activeProvider:'anthropic',
+  anthropic:{apiKey:'',model:'claude-sonnet-4-5',temperature:0.7,maxTokens:4096},
+  openai:{apiKey:'',model:'gpt-4o',temperature:0.7,maxTokens:4096},
+  gemini:{apiKey:'',model:'gemini-2.0-flash',temperature:0.7,maxTokens:4096},
+  ollama:{url:'http://localhost:11434',model:'llama3.2',temperature:0.7,maxTokens:4096},
+};
+
+const SUGGESTIONS = ['Explain quantum computing','Write a Python web scraper','Analyze this idea: ','Summarize key concepts in'];
+
+// ─── HELPERS ─────────────────────────────────────────────────
+const save = (k,v) => { try{localStorage.setItem(k,JSON.stringify(v));}catch{} };
+const load = (k,d) => { try{const s=localStorage.getItem(k);return s?JSON.parse(s):d;}catch{return d;} };
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2);
+const fmtTime = ts => new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const timeGroup = ts => {
+  const diff = Date.now()-ts;
+  if(diff<86400000) return 'Today';
+  if(diff<172800000) return 'Yesterday';
+  if(diff<604800000) return 'This Week';
+  return 'Earlier';
+};
+
+// ─── MARKDOWN RENDERER ──────────────────────────────────────
+function setupMarked() {
+  if(typeof marked==='undefined') return;
+  const renderer = {
+    code(code, lang) {
+      const l = lang||'text';
+      let hi = code;
+      try {
+        if(lang && typeof hljs!=='undefined' && hljs.getLanguage(lang)) hi = hljs.highlight(code,{language:lang}).value;
+        else if(typeof hljs!=='undefined') hi = hljs.highlightAuto(code).value;
+      } catch{}
+      const id = 'cb'+Math.random().toString(36).slice(2);
+      return `<div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);margin:10px 0;overflow:hidden;">
+        <div class="code-hdr"><span>${l}</span><button class="copy-btn" onclick="(function(b,i){navigator.clipboard.writeText(document.getElementById(i).innerText).then(()=>{b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1600)});})(this,'${id}')">Copy</button></div>
+        <pre style="margin:0;background:var(--bg2)!important;"><code id="${id}" class="hljs" style="display:block;padding:13px 15px;overflow-x:auto;font-size:12.5px;line-height:1.6;background:transparent!important;">${hi}</code></pre>
+      </div>`;
+    }
+  };
+  marked.use({renderer, breaks:true, gfm:true});
+}
+setupMarked();
+const md = (content) => {
+  try {
+    if(typeof marked==='undefined') return {__html:content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')};
+    return {__html:marked.parse(content)};
+  } catch { return {__html:content}; }
+};
+
+// ─── STREAMING ENGINE ────────────────────────────────────────
+async function streamAI(provider, messages, systemPrompt, cfg, onChunk, onDone, onError, abortSignal) {
+  try {
+    if(provider==='anthropic') {
+      const body = {model:cfg.model,max_tokens:cfg.maxTokens||4096,stream:true,
+        messages:messages.map(m=>({role:m.role,content:m.content}))};
+      if(systemPrompt) body.system = systemPrompt;
+      body.temperature = cfg.temperature??0.7;
+      const headers = {'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+      if(cfg.apiKey) headers['x-api-key'] = cfg.apiKey;
+      const res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers,body:JSON.stringify(body),signal:abortSignal});
+      if(!res.ok){let e=`HTTP ${res.status}`;try{const j=await res.json();e=j.error?.message||e;}catch{}throw new Error(e);}
+      const reader=res.body.getReader(), dec=new TextDecoder(); let buf='';
+      while(true){const{done,value}=await reader.read();if(done)break;
+        buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop()||'';
+        for(const line of lines){if(!line.startsWith('data: '))continue;
+          try{const d=JSON.parse(line.slice(6));if(d.type==='content_block_delta'&&d.delta?.type==='text_delta')onChunk(d.delta.text);}catch{}}}
+
+    } else if(provider==='openai') {
+      if(!cfg.apiKey) throw new Error('OpenAI API key required — add it in ⚙ Model Configuration.');
+      const res = await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${cfg.apiKey}`},
+        body:JSON.stringify({model:cfg.model,stream:true,temperature:cfg.temperature??0.7,max_tokens:cfg.maxTokens||4096,
+          messages:[...(systemPrompt?[{role:'system',content:systemPrompt}]:[]),...messages.map(m=>({role:m.role,content:m.content}))]}),signal:abortSignal});
+      if(!res.ok){let e=`HTTP ${res.status}`;try{const j=await res.json();e=j.error?.message||e;}catch{}throw new Error(e);}
+      const reader=res.body.getReader(),dec=new TextDecoder();let buf='';
+      while(true){const{done,value}=await reader.read();if(done)break;
+        buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop()||'';
+        for(const line of lines){if(!line.startsWith('data: '))continue;const d=line.slice(6).trim();if(d==='[DONE]')continue;
+          try{const p=JSON.parse(d);const c=p.choices?.[0]?.delta?.content;if(c)onChunk(c);}catch{}}}
+
+    } else if(provider==='gemini') {
+      if(!cfg.apiKey) throw new Error('Gemini API key required — add it in ⚙ Model Configuration.');
+      const url=`https://generativelanguage.googleapis.com/v1beta/models/${cfg.model}:streamGenerateContent?alt=sse&key=${cfg.apiKey}`;
+      const gemMsgs = messages.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+      const gemBody = {contents:gemMsgs,generationConfig:{temperature:cfg.temperature??0.7,maxOutputTokens:cfg.maxTokens||4096}};
+      if(systemPrompt) gemBody.systemInstruction={parts:[{text:systemPrompt}]};
+      const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(gemBody),signal:abortSignal});
+      if(!res.ok){let e=`HTTP ${res.status}`;try{const j=await res.json();e=j.error?.message||e;}catch{}throw new Error(e);}
+      const reader=res.body.getReader(),dec=new TextDecoder();let buf='';
+      while(true){const{done,value}=await reader.read();if(done)break;
+        buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop()||'';
+        for(const line of lines){if(!line.startsWith('data: '))continue;
+          try{const d=JSON.parse(line.slice(6));const t=d.candidates?.[0]?.content?.parts?.[0]?.text;if(t)onChunk(t);}catch{}}}
+
+    } else if(provider==='ollama') {
+      const base=cfg.url||'http://localhost:11434';
+      const res=await fetch(`${base}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:cfg.model,stream:true,options:{temperature:cfg.temperature??0.7,num_predict:cfg.maxTokens||4096},
+          messages:[...(systemPrompt?[{role:'system',content:systemPrompt}]:[]),...messages.map(m=>({role:m.role,content:m.content}))]}),signal:abortSignal});
+      if(!res.ok) throw new Error(`Ollama error ${res.status} — is it running at ${base}?`);
+      const reader=res.body.getReader(),dec=new TextDecoder();
+      while(true){const{done,value}=await reader.read();if(done)break;
+        const chunk=dec.decode(value,{stream:true});
+        for(const line of chunk.split('\n')){if(!line.trim())continue;
+          try{const d=JSON.parse(line);if(d.message?.content)onChunk(d.message.content);}catch{}}}
+    }
+    onDone();
+  } catch(err) {
+    if(err.name==='AbortError') onDone();
+    else onError(err.message||'An unexpected error occurred. Please try again.');
+  }
+}
+
+// ─── APP ─────────────────────────────────────────────────────
+const App = () => {
+  const [convs, setConvs] = useState(()=>load('ys_convs',[]));
+  const [activeId, setActiveId] = useState(null);
+  const [input, setInput] = useState('');
+  const [streaming, setStreaming] = useState(false);
+  const [streamText, setStreamText] = useState('');
+  const [panel, setPanel] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [cfg, setCfg] = useState(()=>load('ys_cfg',DEFAULT_CFG));
+  const [voiceOn, setVoiceOn] = useState(false);
+  const [search, setSearch] = useState('');
+  const [error, setError] = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameVal, setRenameVal] = useState('');
+  const [toast, setToast] = useState(null);
+  const [expFmt, setExpFmt] = useState('markdown');
+
+  const msgsEndRef = useRef(null);
+  const taRef = useRef(null);
+  const recRef = useRef(null);
+  const abortRef = useRef(null);
+  const streamRef = useRef('');
+
+  const activeConv = convs.find(c=>c.id===activeId);
+
+  useEffect(()=>save('ys_convs',convs),[convs]);
+  useEffect(()=>save('ys_cfg',cfg),[cfg]);
+  useEffect(()=>{msgsEndRef.current?.scrollIntoView({behavior:'smooth'});},[activeConv?.messages?.length,streamText]);
+  useEffect(()=>{
+    const fn=(e)=>{if(e.key==='Escape')setPanel(null);};
+    window.addEventListener('keydown',fn);return()=>window.removeEventListener('keydown',fn);
+  },[]);
+
+  const showToast = msg => { setToast(msg); setTimeout(()=>setToast(null),2600); };
+
+  const newConv = () => {
+    const c = {id:uid(),name:'New Chat',messages:[],systemPrompt:'',provider:cfg.activeProvider,model:cfg[cfg.activeProvider]?.model,createdAt:Date.now()};
+    setConvs(p=>[c,...p]); setActiveId(c.id); setError(null); setPanel(null);
+  };
+
+  const delConv = id => {
+    setConvs(p=>p.filter(c=>c.id!==id));
+    if(activeId===id) setActiveId(null);
+    showToast('Conversation deleted');
+  };
+
+  const upConv = (id,updates) => setConvs(p=>p.map(c=>c.id===id?{...c,...updates}:c));
+
+  const sendMsg = async () => {
+    if(!input.trim()||streaming) return;
+    const txt = input.trim();
+    setInput(''); setError(null);
+
+    let convId = activeId;
+    let existingMsgs = [];
+    let sysPrompt = '';
+
+    if(!convId) {
+      convId = uid();
+      const newC = {id:convId,name:txt.slice(0,42)+(txt.length>42?'…':''),messages:[],systemPrompt:'',provider:cfg.activeProvider,model:cfg[cfg.activeProvider]?.model,createdAt:Date.now()};
+      setConvs(p=>[newC,...p]);
+      setActiveId(convId);
+    } else {
+      const cv = convs.find(c=>c.id===convId);
+      existingMsgs = cv?.messages||[];
+      sysPrompt = cv?.systemPrompt||'';
+      if(existingMsgs.length===0) upConv(convId,{name:txt.slice(0,42)+(txt.length>42?'…':'')});
+    }
+
+    const userMsg = {id:uid(),role:'user',content:txt,timestamp:Date.now()};
+    setConvs(p=>p.map(c=>c.id!==convId?c:{...c,messages:[...c.messages,userMsg]}));
+
+    const toSend = [...existingMsgs.map(m=>({role:m.role,content:m.content})),{role:'user',content:txt}];
+
+    setStreaming(true); setStreamText(''); streamRef.current='';
+    const ctrl = new AbortController(); abortRef.current = ctrl;
+
+    await streamAI(
+      cfg.activeProvider, toSend, sysPrompt, cfg[cfg.activeProvider],
+      chunk => { streamRef.current+=chunk; setStreamText(streamRef.current); },
+      () => {
+        const assistantMsg = {id:uid(),role:'assistant',content:streamRef.current,timestamp:Date.now()};
+        setConvs(p=>p.map(c=>c.id!==convId?c:{...c,messages:[...c.messages,assistantMsg]}));
+        setStreamText(''); setStreaming(false); streamRef.current='';
+      },
+      errMsg => {
+        setError(errMsg);
+        if(streamRef.current) {
+          const assistantMsg = {id:uid(),role:'assistant',content:streamRef.current+'\n\n*[Response interrupted]*',timestamp:Date.now()};
+          setConvs(p=>p.map(c=>c.id!==convId?c:{...c,messages:[...c.messages,assistantMsg]}));
+        }
+        setStreamText(''); setStreaming(false); streamRef.current='';
+      },
+      ctrl.signal
+    );
+  };
+
+  const stopStream = () => { abortRef.current?.abort(); };
+
+  const handleKey = e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} };
+
+  const handleTA = e => {
+    setInput(e.target.value);
+    e.target.style.height='auto';
+    e.target.style.height=Math.min(e.target.scrollHeight,200)+'px';
+  };
+
+  const handleVoice = () => {
+    if(voiceOn){recRef.current?.stop();return;}
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){showToast('Voice input not supported in this browser');return;}
+    const r=new SR(); r.continuous=false; r.interimResults=true; r.lang='en-US';
+    r.onstart=()=>setVoiceOn(true);
+    r.onend=()=>setVoiceOn(false);
+    r.onresult=e=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');setInput(t);};
+    r.onerror=()=>setVoiceOn(false);
+    recRef.current=r; r.start();
+  };
+
+  const doExport = () => {
+    if(!activeConv) return;
+    const cv=activeConv; let content,filename,type;
+    if(expFmt==='json'){content=JSON.stringify(cv,null,2);filename=`${cv.name}.json`;type='application/json';}
+    else if(expFmt==='markdown'){
+      content=`# ${cv.name}\n\n**Provider:** ${cv.provider} · **Model:** ${cv.model}  \n**Created:** ${new Date(cv.createdAt).toLocaleString()}\n\n`;
+      if(cv.systemPrompt) content+=`> 🎭 **System Prompt:** ${cv.systemPrompt}\n\n`;
+      content+='---\n\n';
+      cv.messages.forEach(m=>{content+=`### ${m.role==='user'?'👤 You':'🤖 Assistant'}\n\n${m.content}\n\n`;});
+      filename=`${cv.name}.md`;type='text/markdown';
+    } else {
+      content=cv.messages.map(m=>`[${m.role.toUpperCase()}]\n${m.content}`).join('\n\n---\n\n');
+      filename=`${cv.name}.txt`;type='text/plain';
+    }
+    const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
+    showToast('Conversation exported!');
+  };
+
+  const filtered = convs.filter(c=>
+    c.name.toLowerCase().includes(search.toLowerCase())||
+    c.messages.some(m=>m.content.toLowerCase().includes(search.toLowerCase()))
+  );
+  const grouped = filtered.reduce((a,c)=>{const g=timeGroup(c.createdAt);if(!a[g])a[g]=[];a[g].push(c);return a;},{});
+  const GRP_ORDER = ['Today','Yesterday','This Week','Earlier'];
+
+  const pInfo = PROVIDERS[cfg.activeProvider];
+  const pCfg = cfg[cfg.activeProvider];
+
+  return (
+    <div className="app">
+      {/* ── SIDEBAR ── */}
+      <div className={`sidebar ${!sidebarOpen?'closed':''}`}>
+        <div className="sb-head">
+          <div className="logo">
+            <div className="logo-icon">🌋</div>
+            <span className="logo-text">Yellow<span>Stone</span></span>
+          </div>
+          <button className="new-btn" onClick={newConv}>
+            <span style={{fontSize:16,fontWeight:300}}>+</span> New Chat
+          </button>
+        </div>
+        <div className="sb-search">
+          <span className="sb-search-icon">⌕</span>
+          <input className="search-inp" placeholder="Search conversations…" value={search} onChange={e=>setSearch(e.target.value)} />
+        </div>
+        <div className="conv-list">
+          {convs.length===0 && <div className="empty-list">No conversations yet.<br/>Start your first chat!</div>}
+          {GRP_ORDER.map(grp=>{
+            const cs=grouped[grp]; if(!cs?.length) return null;
+            return (
+              <div key={grp}>
+                <div className="conv-grp-lbl">{grp}</div>
+                {cs.map(cv=>(
+                  <div key={cv.id} className={`conv-item ${cv.id===activeId?'active':''}`}
+                    onClick={()=>{setActiveId(cv.id);setError(null);}}>
+                    <span className="conv-ico">💬</span>
+                    {renamingId===cv.id
+                      ? <input className="rename-inp" value={renameVal} onChange={e=>setRenameVal(e.target.value)} autoFocus
+                          onClick={e=>e.stopPropagation()}
+                          onBlur={()=>{upConv(cv.id,{name:renameVal||cv.name});setRenamingId(null);}}
+                          onKeyDown={e=>{if(e.key==='Enter'){upConv(cv.id,{name:renameVal||cv.name});setRenamingId(null);}}} />
+                      : <span className="conv-name"
+                          onDoubleClick={e=>{e.stopPropagation();setRenamingId(cv.id);setRenameVal(cv.name);}}>
+                          {cv.name}
+                        </span>
+                    }
+                    <div className="c-acts">
+                      <button className="c-act-btn" title="Rename" onClick={e=>{e.stopPropagation();setRenamingId(cv.id);setRenameVal(cv.name);}}>✎</button>
+                      <button className="c-act-btn del" title="Delete" onClick={e=>{e.stopPropagation();delConv(cv.id);}}>✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+        <div className="sb-foot">
+          <button className="sb-foot-btn" onClick={()=>setPanel('settings')}>⚙ Settings &amp; API Keys</button>
+        </div>
+      </div>
+
+      {/* ── MAIN ── */}
+      <div className="main">
+        {/* Header */}
+        <div className="chat-hdr">
+          <button className="tog-btn" onClick={()=>setSidebarOpen(!sidebarOpen)} title="Toggle sidebar">
+            {sidebarOpen?'◧':'▤'}
+          </button>
+          <span className="hdr-title">{activeConv?.name||'YellowStone'}</span>
+          <button className="model-badge" onClick={()=>setPanel('model')}>
+            <span className="mdot"></span>
+            {pInfo?.icon} {pCfg?.model||'No model'}
+          </button>
+          <div className="hdr-acts">
+            <button className={`ico-btn ${panel==='system'?'on':''}`} title="System Prompt" onClick={()=>setPanel(panel==='system'?null:'system')}>🎭</button>
+            <button className={`ico-btn ${panel==='export'?'on':''}`} title="Export" onClick={()=>setPanel(panel==='export'?null:'export')}>⬇</button>
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div className="msgs-wrap">
+          {(!activeConv||activeConv.messages.length===0)&&!streaming ? (
+            <div className="empty-state">
+              <div className="empty-ico">🌋</div>
+              <div className="empty-title">YellowStone</div>
+              <div className="empty-sub">
+                Powered by <strong style={{color:'var(--amber)'}}>{pInfo?.name}</strong> · {pCfg?.model}<br/>
+                Multi-model AI chat with streaming
+              </div>
+              <div className="chips">
+                {SUGGESTIONS.map(s=>(
+                  <button key={s} className="chip"
+                    onClick={()=>{setInput(s);setTimeout(()=>taRef.current?.focus(),50);}}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="msgs-inner">
+              {activeConv?.messages.map(msg=>(
+                <MsgBubble key={msg.id} msg={msg} showToast={showToast} />
+              ))}
+              {streaming && streamText && (
+                <div className="message assistant">
+                  <div className="msg-avatar">✦</div>
+                  <div className="msg-body">
+                    <div className="msg-bubble">
+                      <div className="md" dangerouslySetInnerHTML={md(streamText)} />
+                      <span className="stream-cursor"></span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {streaming && !streamText && (
+                <div className="message assistant">
+                  <div className="msg-avatar">✦</div>
+                  <div className="msg-body">
+                    <div className="msg-bubble">
+                      <div className="typing"><div className="tdot"/><div className="tdot"/><div className="tdot"/></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {error && (
+                <div className="err-msg">
+                  <span style={{flexShrink:0}}>⚠</span>
+                  <span>{error}</span>
+                </div>
+              )}
+              <div ref={msgsEndRef}/>
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="input-area">
+          <div className="input-inner">
+            <div className="input-box">
+              <textarea ref={taRef} className="inp-ta" rows={1}
+                placeholder={streaming?'AI is responding…':'Message YellowStone… (Shift+Enter for newline)'}
+                value={input} onChange={handleTA} onKeyDown={handleKey} disabled={streaming} />
+              <div className="inp-foot">
+                <span className="inp-hint">{pInfo?.icon} {pCfg?.model}</span>
+                <div className="inp-right">
+                  <button className={`voice-btn ${voiceOn?'active':''}`} onClick={handleVoice}>
+                    {voiceOn?'⏹ Stop':'🎤 Voice'}
+                  </button>
+                  {streaming
+                    ? <button className="stop-btn" onClick={stopStream}>⏹ Stop</button>
+                    : <button className="send-btn" onClick={sendMsg} disabled={!input.trim()}>
+                        ↑ Send
+                      </button>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── PANELS ── */}
+      {panel && (
+        <div className="panel-overlay" onClick={e=>{if(e.target===e.currentTarget)setPanel(null);}}>
+          <div className="panel">
+            {panel==='model' && <ModelPanel cfg={cfg} setCfg={setCfg} onClose={()=>setPanel(null)} showToast={showToast}/>}
+            {panel==='system' && <SystemPanel activeConv={activeConv} upConv={upConv} onClose={()=>setPanel(null)} showToast={showToast}/>}
+            {panel==='export' && <ExportPanel activeConv={activeConv} expFmt={expFmt} setExpFmt={setExpFmt} doExport={doExport} onClose={()=>setPanel(null)}/>}
+            {panel==='settings' && <SettingsPanel cfg={cfg} setCfg={setCfg} convs={convs} setConvs={setConvs} setActiveId={setActiveId} onClose={()=>setPanel(null)} showToast={showToast}/>}
+          </div>
+        </div>
+      )}
+
+      {toast && <div className="toast">✓ {toast}</div>}
+    </div>
+  );
+};
+
+// ─── MESSAGE BUBBLE ──────────────────────────────────────────
+const MsgBubble = ({msg, showToast}) => {
+  const copy = () => navigator.clipboard.writeText(msg.content).then(()=>showToast('Copied to clipboard!'));
+  return (
+    <div className={`message ${msg.role}`}>
+      <div className="msg-avatar">{msg.role==='user'?'👤':'✦'}</div>
+      <div className="msg-body">
+        <div className="msg-bubble">
+          {msg.role==='assistant'
+            ? <div className="md" dangerouslySetInnerHTML={md(msg.content)}/>
+            : <span style={{whiteSpace:'pre-wrap'}}>{msg.content}</span>}
+        </div>
+        <div className="msg-meta">
+          <span className="msg-time">{fmtTime(msg.timestamp)}</span>
+          <span className="msg-act"><button className="msg-act-btn" onClick={copy}>Copy</button></span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── MODEL CONFIG PANEL ──────────────────────────────────────
+const ModelPanel = ({cfg, setCfg, onClose, showToast}) => {
+  const [lc, setLc] = useState(cfg);
+  const [ap, setAp] = useState(cfg.activeProvider);
+  const upP = (p,k,v) => setLc(prev=>({...prev,[p]:{...prev[p],[k]:v}}));
+  const save = () => { setCfg({...lc,activeProvider:ap}); showToast('Model configuration saved'); onClose(); };
+  return (
+    <>
+      <div className="panel-hdr">
+        <div className="panel-ttl">⚙ Model Configuration</div>
+        <button className="panel-close" onClick={onClose}>✕</button>
+      </div>
+      <div className="panel-body">
+        <div className="fsec">
+          <div className="fsec-ttl">Active Provider</div>
+          <div className="prov-tabs">
+            {Object.entries(PROVIDERS).map(([k,p])=>(
+              <div key={k} className={`prov-tab ${ap===k?'on':''}`} onClick={()=>setAp(k)}>
+                <span className="prov-tab-ico">{p.icon}</span>{p.name}
+              </div>
+            ))}
+          </div>
+        </div>
+        {Object.entries(PROVIDERS).map(([k,p])=>ap===k&&(
+          <div key={k}>
+            <div className="fsec">
+              <div className="fsec-ttl">{p.name} Settings</div>
+              {k!=='ollama'&&(
+                <div className="fgrp">
+                  <label className="flbl">API Key</label>
+                  <input type="password" className="f-inp" placeholder={`${p.name} API key…`}
+                    value={lc[k]?.apiKey||''} onChange={e=>upP(k,'apiKey',e.target.value)}/>
+                </div>
+              )}
+              {k==='ollama'&&(
+                <div className="fgrp">
+                  <label className="flbl">Server URL</label>
+                  <input className="f-inp" placeholder="http://localhost:11434"
+                    value={lc[k]?.url||''} onChange={e=>upP(k,'url',e.target.value)}/>
+                </div>
+              )}
+              <div className="fgrp">
+                <label className="flbl">Model</label>
+                {k==='ollama'
+                  ? <input className="f-inp" placeholder="llama3.2" value={lc[k]?.model||''} onChange={e=>upP(k,'model',e.target.value)}/>
+                  : <select className="f-sel" value={lc[k]?.model||p.defaultModel} onChange={e=>upP(k,'model',e.target.value)}>
+                      {p.models.map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>
+                }
+              </div>
+            </div>
+            <div className="fsec">
+              <div className="fsec-ttl">Parameters</div>
+              <div className="fgrp">
+                <label className="flbl">Temperature</label>
+                <div className="rng-wrap">
+                  <input type="range" className="f-rng" min="0" max="2" step="0.1"
+                    value={lc[k]?.temperature??0.7} onChange={e=>upP(k,'temperature',parseFloat(e.target.value))}/>
+                  <span className="rng-val">{(lc[k]?.temperature??0.7).toFixed(1)}</span>
+                </div>
+              </div>
+              <div className="fgrp">
+                <label className="flbl">Max Tokens</label>
+                <div className="rng-wrap">
+                  <input type="range" className="f-rng" min="256" max="8192" step="256"
+                    value={lc[k]?.maxTokens??4096} onChange={e=>upP(k,'maxTokens',parseInt(e.target.value))}/>
+                  <span className="rng-val">{lc[k]?.maxTokens??4096}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="panel-footer"><button className="save-btn" onClick={save}>Save Configuration</button></div>
+    </>
+  );
+};
+
+// ─── SYSTEM PROMPT PANEL ─────────────────────────────────────
+const SystemPanel = ({activeConv, upConv, onClose, showToast}) => {
+  const [selTpl, setSelTpl] = useState('custom');
+  const [prompt, setPrompt] = useState(activeConv?.systemPrompt||'');
+  const applyTpl = tpl => { setSelTpl(tpl.id); if(tpl.id!=='custom') setPrompt(tpl.prompt); };
+  const save = () => { if(activeConv) upConv(activeConv.id,{systemPrompt:prompt}); showToast('System prompt saved'); onClose(); };
+  return (
+    <>
+      <div className="panel-hdr">
+        <div className="panel-ttl">🎭 System Prompt</div>
+        <button className="panel-close" onClick={onClose}>✕</button>
+      </div>
+      <div className="panel-body">
+        <div className="fsec">
+          <div className="fsec-ttl">Persona Templates</div>
+          <div className="tpl-grid">
+            {TEMPLATES.map(t=>(
+              <div key={t.id} className={`tpl-card ${selTpl===t.id?'on':''}`} onClick={()=>applyTpl(t)}>
+                <div className="tpl-ico">{t.icon}</div>
+                <div className="tpl-name">{t.name}</div>
+                <div className="tpl-desc">{t.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="fsec">
+          <div className="fsec-ttl">Prompt</div>
+          <textarea className="sys-ta" rows={8}
+            placeholder="Describe how the AI should behave, its expertise, tone, and instructions…"
+            value={prompt} onChange={e=>setPrompt(e.target.value)}/>
+          <div style={{fontSize:'11px',color:'var(--txt3)',marginTop:'6px'}}>
+            {prompt.length} chars · applies to this conversation only
+            {!activeConv&&<span style={{color:'var(--red)'}}> · Start a chat first</span>}
+          </div>
+        </div>
+      </div>
+      <div className="panel-footer">
+        <button className="save-btn" onClick={save} disabled={!activeConv} style={{opacity:activeConv?1:.4,cursor:activeConv?'pointer':'not-allowed'}}>
+          Apply System Prompt
+        </button>
+      </div>
+    </>
+  );
+};
+
+// ─── EXPORT PANEL ────────────────────────────────────────────
+const ExportPanel = ({activeConv, expFmt, setExpFmt, doExport, onClose}) => (
+  <>
+    <div className="panel-hdr">
+      <div className="panel-ttl">⬇ Export Conversation</div>
+      <button className="panel-close" onClick={onClose}>✕</button>
+    </div>
+    <div className="panel-body">
+      {!activeConv
+        ? <div style={{color:'var(--txt2)',fontSize:'13px',lineHeight:1.7}}>No active conversation to export. Select or start a conversation first.</div>
+        : <>
+          <div className="fsec">
+            <div className="fsec-ttl">Conversation</div>
+            <div className="info-card">
+              <div style={{fontWeight:600,color:'var(--txt)',marginBottom:5,fontSize:'14px'}}>{activeConv.name}</div>
+              <div className="stat-row"><span className="k">Messages</span><span className="v">{activeConv.messages.length}</span></div>
+              <div className="stat-row"><span className="k">Provider</span><span className="v">{activeConv.provider}</span></div>
+              <div className="stat-row"><span className="k">Model</span><span className="v">{activeConv.model}</span></div>
+              <div className="stat-row"><span className="k">Created</span><span className="v">{new Date(activeConv.createdAt).toLocaleDateString()}</span></div>
+            </div>
+          </div>
+          <div className="fsec">
+            <div className="fsec-ttl">Format</div>
+            <div className="exp-fmts">
+              {[['markdown','📝 Markdown'],['json','{ } JSON'],['text','📄 Plain Text']].map(([f,l])=>(
+                <button key={f} className={`exp-fmt-btn ${expFmt===f?'on':''}`} onClick={()=>setExpFmt(f)}>{l}</button>
+              ))}
+            </div>
+            <button className="exp-dl-btn" onClick={()=>{doExport();onClose();}}>
+              ⬇ Download {expFmt==='markdown'?'.md':expFmt==='json'?'.json':'.txt'}
+            </button>
+          </div>
+        </>
+      }
+    </div>
+  </>
+);
+
+// ─── SETTINGS PANEL ──────────────────────────────────────────
+const SettingsPanel = ({convs, setConvs, setActiveId, onClose, showToast}) => {
+  const total = convs.reduce((s,c)=>s+c.messages.length,0);
+  const clearAll = () => {
+    if(!confirm('Clear all conversations? This cannot be undone.')) return;
+    setConvs([]); setActiveId(null); showToast('All conversations cleared'); onClose();
+  };
+  return (
+    <>
+      <div className="panel-hdr">
+        <div className="panel-ttl">⚙ Settings</div>
+        <button className="panel-close" onClick={onClose}>✕</button>
+      </div>
+      <div className="panel-body">
+        <div className="fsec">
+          <div className="fsec-ttl">About</div>
+          <div className="info-card" style={{display:'flex',gap:12,alignItems:'center'}}>
+            <div style={{fontSize:34}}>🌋</div>
+            <div>
+              <div style={{fontFamily:'var(--serif)',fontSize:20,fontWeight:600,color:'var(--txt)'}}>YellowStone</div>
+              <div style={{fontSize:11.5,color:'var(--txt3)',marginTop:2}}>Multi-model AI Chat · v1.0.0</div>
+              <div style={{fontSize:11.5,color:'var(--teal)',marginTop:3}}>Anthropic · OpenAI · Gemini · Ollama</div>
+            </div>
+          </div>
+        </div>
+        <div className="fsec">
+          <div className="fsec-ttl">Storage</div>
+          <div className="info-card" style={{marginBottom:8}}>
+            <div className="stat-row"><span className="k">Conversations</span><span className="v">{convs.length}</span></div>
+            <div className="stat-row"><span className="k">Total messages</span><span className="v">{total}</span></div>
+            <div className="stat-row"><span className="k">Storage</span><span className="v">localStorage</span></div>
+          </div>
+          <div style={{fontSize:11.5,color:'var(--txt3)',marginBottom:10,lineHeight:1.6}}>
+            All data stored locally in your browser. No account, login, or cloud sync required.
+          </div>
+          <button className="danger-btn" onClick={clearAll}>🗑 Clear All Conversations</button>
+        </div>
+        <div className="fsec">
+          <div className="fsec-ttl">Keyboard Shortcuts</div>
+          {[['Enter','Send message'],['Shift+Enter','New line'],['Esc','Close panel'],['Double-click chat','Rename conversation']].map(([k,d])=>(
+            <div key={k} className="stat-row">
+              <span className="k">{d}</span><span className="kbd">{k}</span>
+            </div>
+          ))}
+        </div>
+        <div className="fsec">
+          <div className="fsec-ttl">API Keys Guide</div>
+          <div style={{fontSize:12,color:'var(--txt2)',lineHeight:1.8}}>
+            <div>🔮 <strong style={{color:'var(--txt)'}}>Anthropic</strong> — console.anthropic.com</div>
+            <div>⚡ <strong style={{color:'var(--txt)'}}>OpenAI</strong> — platform.openai.com/api-keys</div>
+            <div>✦ <strong style={{color:'var(--txt)'}}>Gemini</strong> — aistudio.google.com/app/apikey</div>
+            <div>🦙 <strong style={{color:'var(--txt)'}}>Ollama</strong> — run locally, no key needed</div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
